@@ -180,18 +180,28 @@ jobs:
           uv tool install pyinstaller
 
       - name: Obfuscate
+        if: matrix.arch == 'x86_64'
         run: |
           pyarmor gen `
             --output dist\obfuscated `
             --recursive `
             src\sshine
 
+      - name: Set source path
+        shell: pwsh
+        run: |
+          if ("${{ matrix.arch }}" -eq "x86_64") {
+            echo "SRC_PATH=dist\obfuscated" | Out-File -FilePath $env:GITHUB_ENV -Append
+          } else {
+            echo "SRC_PATH=src" | Out-File -FilePath $env:GITHUB_ENV -Append
+          }
+
       - name: Build binary
         run: |
           pyinstaller `
             --onefile `
             --name sshine `
-            --paths dist\obfuscated `
+            --paths $env:SRC_PATH `
             --paths src `
             --collect-all sshine `
             --hidden-import sshine `

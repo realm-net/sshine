@@ -52,6 +52,8 @@ jobs:
             --paths src \
             --collect-all sshine \
             --hidden-import sshine \
+            --hidden-import typer \
+            --hidden-import rich \
             --hidden-import asyncssh \
             --hidden-import aiosqlite \
             --hidden-import anyio \
@@ -118,6 +120,8 @@ jobs:
             --paths src \
             --collect-all sshine \
             --hidden-import sshine \
+            --hidden-import typer \
+            --hidden-import rich \
             --hidden-import asyncssh \
             --hidden-import aiosqlite \
             --hidden-import anyio \
@@ -205,6 +209,8 @@ jobs:
             --paths src `
             --collect-all sshine `
             --hidden-import sshine `
+            --hidden-import typer `
+            --hidden-import rich `
             --hidden-import asyncssh `
             --hidden-import aiosqlite `
             --hidden-import anyio `

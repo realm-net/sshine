@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from importlib.metadata import version as _pkg_version
+from typing import Annotated
+
 import typer
 from rich.console import Console
 
@@ -44,6 +47,12 @@ app.command("restore", help="Restore from backup.")(restore_cmd)
 
 
 @app.callback(invoke_without_command=True)
-def _main(ctx: typer.Context) -> None:
+def _main(
+    ctx: typer.Context,
+    version: Annotated[bool, typer.Option("--version", "-v", help="Show version and exit.", is_eager=True)] = False,
+) -> None:
+    if version:
+        typer.echo(_pkg_version("sshine"))
+        raise typer.Exit()
     if ctx.invoked_subcommand is None:
         console.print(ctx.get_help())

@@ -83,8 +83,6 @@ jobs:
     strategy:
       matrix:
         include:
-          - arch:   x86_64
-            runner: macos-13
           - arch:   aarch64
             runner: macos-14
 
@@ -167,11 +165,12 @@ jobs:
 
       - name: Install OpenSSL (Windows ARM64)
         if: matrix.arch == 'aarch64'
-        run: |
-          vcpkg install openssl:arm64-windows
-          echo "OPENSSL_DIR=C:/vcpkg/installed/arm64-windows" | Out-File -FilePath $env:GITHUB_ENV -Append
-          echo "OPENSSL_STATIC=1" | Out-File -FilePath $env:GITHUB_ENV -Append
         shell: pwsh
+        run: |
+          Invoke-WebRequest -Uri "https://download.firedaemon.com/FireDaemon-OpenSSL/openssl-3.3.2.zip" -OutFile openssl.zip
+          Expand-Archive openssl.zip -DestinationPath C:/openssl
+          echo "OPENSSL_DIR=C:/openssl/x64" | Out-File -FilePath $env:GITHUB_ENV -Append
+          echo "OPENSSL_STATIC=1" | Out-File -FilePath $env:GITHUB_ENV -Append
 
       - run: uv sync
 

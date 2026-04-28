@@ -1,0 +1,97 @@
+[project]
+name = "sshine"
+version = "0.1.0a1"
+requires-python = ">=3.14"
+dependencies = [
+    "keyring>=25.7.0",
+    "typer[all]>=0.12",
+    "asyncssh>=2.18",
+    "aiosqlite>=0.20",
+    "cryptography>=42",
+    "ruamel.yaml>=0.18",
+    "anyio>=4",
+]
+
+[project.optional-dependencies]
+templates = ["jinja2>=3.1"]
+
+[project.scripts]
+sshine = "sshine.__main__:app"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.basedpyright]
+typeCheckingMode = "standard"
+include = ["src/sshine/"]
+exclude = ["**/__pycache__", ".venv/"]
+reportMissingTypeStubs = false
+pythonVersion = "3.14"
+
+[tool.ruff]
+line-length = 150
+target-version = "py314"
+src = ["src"]
+
+include = ["src/**.py"]
+
+[tool.ruff.lint]
+select = [
+    "ALL"
+]
+ignore = [
+    "ARG",
+    "ANN",
+    "D",
+    "EM101",
+    "EM102",
+    "PT001",
+    "PT023",
+    "SIM108",
+    "RET505",
+    "PLR0913",
+    "SIM103",
+    "ISC003",
+    "SIM114",
+    "TC001",
+    "TC002",
+    "TC003",
+    "TC006",
+    "F401",
+    "RUF",
+    "S702",
+    "PLR2004",
+    "T201",
+    "FBT001",
+    "FBT002",
+    "PLE1205",
+    "PGH003",
+    "TRY003",
+    "RET503",
+    "E701",
+    "C408",
+    "PLC0415",
+    "BLE001",
+    "TRY300",
+    "S608",
+    "S607",
+    "S603",
+    "S110",
+    "S112",
+    "SIM105",
+    "SIM102",
+    "S701",
+    "S606",
+    "C901",
+    "TRY301",
+    "S101",
+]
+isort.no-lines-before = ["local-folder"]
+flake8-tidy-imports.ban-relative-imports = "parents"
+
+[tool.ruff.format]
+quote-style = "double"
+indent-style = "space"
+skip-magic-trailing-comma = false
+line-ending = "auto"

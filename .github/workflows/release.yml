@@ -1,0 +1,272 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-linux:
+    name: Linux (${{ matrix.arch }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      matrix:
+        include:
+          - arch:   x86_64
+            runner: ubuntu-22.04
+          - arch:   aarch64
+            runner: ubuntu-22.04-arm
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - uses: astral-sh/setup-uv@v4
+
+      - run: uv sync
+
+      - name: Install build tools
+        run: |
+          uv tool install pyarmor
+          uv tool install pyinstaller
+
+      - name: Obfuscate
+        run: |
+          pyarmor gen \
+            --output dist/obfuscated \
+            --recursive \
+            src/sshine
+
+      - name: Build binary
+        run: |
+          pyinstaller \
+            --onefile \
+            --name sshine \
+            --paths dist/obfuscated \
+            --paths src \
+            --collect-all sshine \
+            --hidden-import sshine \
+            --hidden-import asyncssh \
+            --hidden-import aiosqlite \
+            --hidden-import anyio \
+            --hidden-import cryptography \
+            --hidden-import keyring \
+            --hidden-import "ruamel.yaml" \
+            --strip \
+            --clean \
+            src/sshine/__main__.py
+
+      - name: Package
+        run: |
+          DIST_NAME="sshine-linux-${{ matrix.arch }}"
+          mkdir -p dist/release
+          cp dist/sshine dist/release/sshine
+          cd dist/release
+          tar -czf "${DIST_NAME}.tar.gz" sshine
+          sha256sum "${DIST_NAME}.tar.gz" > "${DIST_NAME}.tar.gz.sha256"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sshine-linux-${{ matrix.arch }}
+          path: dist/release/
+          retention-days: 1
+
+  build-macos:
+    name: macOS (${{ matrix.arch }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      matrix:
+        include:
+          - arch:   x86_64
+            runner: macos-13
+          - arch:   aarch64
+            runner: macos-14
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - uses: astral-sh/setup-uv@v4
+
+      - run: uv sync
+
+      - name: Install build tools
+        run: |
+          uv tool install pyarmor
+          uv tool install pyinstaller
+
+      - name: Obfuscate
+        run: |
+          pyarmor gen \
+            --output dist/obfuscated \
+            --recursive \
+            src/sshine
+
+      - name: Build binary
+        run: |
+          pyinstaller \
+            --onefile \
+            --name sshine \
+            --paths dist/obfuscated \
+            --paths src \
+            --collect-all sshine \
+            --hidden-import sshine \
+            --hidden-import asyncssh \
+            --hidden-import aiosqlite \
+            --hidden-import anyio \
+            --hidden-import cryptography \
+            --hidden-import keyring \
+            --hidden-import "ruamel.yaml" \
+            --strip \
+            --clean \
+            src/sshine/__main__.py
+
+      - name: Package
+        run: |
+          DIST_NAME="sshine-darwin-${{ matrix.arch }}"
+          mkdir -p dist/release
+          cp dist/sshine dist/release/sshine
+          cd dist/release
+          tar -czf "${DIST_NAME}.tar.gz" sshine
+          shasum -a 256 "${DIST_NAME}.tar.gz" > "${DIST_NAME}.tar.gz.sha256"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sshine-darwin-${{ matrix.arch }}
+          path: dist/release/
+          retention-days: 1
+
+  build-windows:
+    name: Windows (${{ matrix.arch }})
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      matrix:
+        include:
+          - arch:   x86_64
+            runner: windows-2022
+          - arch:   aarch64
+            runner: windows-11-arm
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+
+      - uses: astral-sh/setup-uv@v4
+
+      - run: uv sync
+
+      - name: Install build tools
+        run: |
+          uv tool install pyarmor
+          uv tool install pyinstaller
+
+      - name: Obfuscate
+        run: |
+          pyarmor gen `
+            --output dist\obfuscated `
+            --recursive `
+            src\sshine
+
+      - name: Build binary
+        run: |
+          pyinstaller `
+            --onefile `
+            --name sshine `
+            --paths dist\obfuscated `
+            --paths src `
+            --collect-all sshine `
+            --hidden-import sshine `
+            --hidden-import asyncssh `
+            --hidden-import aiosqlite `
+            --hidden-import anyio `
+            --hidden-import cryptography `
+            --hidden-import keyring `
+            --hidden-import "ruamel.yaml" `
+            --clean `
+            src\sshine\__main__.py
+
+      - name: Package
+        shell: pwsh
+        run: |
+          $distName = "sshine-windows-${{ matrix.arch }}"
+          New-Item -ItemType Directory -Path "dist\release" -Force | Out-Null
+          Copy-Item "dist\sshine.exe" "dist\release\sshine.exe" -Force
+          Push-Location "dist\release"
+          Compress-Archive -Path "sshine.exe" -DestinationPath "$distName.zip" -Force
+          $hash = (Get-FileHash -Algorithm SHA256 "$distName.zip").Hash.ToLower()
+          "$hash  $distName.zip" | Out-File -Encoding ASCII "$distName.zip.sha256"
+          Pop-Location
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sshine-windows-${{ matrix.arch }}
+          path: dist/release/
+          retention-days: 1
+
+  publish:
+    name: Publish
+    needs: [build-linux, build-macos, build-windows]
+    runs-on: ubuntu-22.04
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: artifacts/
+
+      - name: Flatten artifacts
+        run: |
+          mkdir -p dist/release
+          find artifacts/ -type f \( -name "*.tar.gz" -o -name "*.zip" -o -name "*.sha256" \) \
+            -exec cp {} dist/release/ \;
+          ls -lh dist/release/
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          name: "sshine ${{ github.ref_name }}"
+          body: |
+            ## sshine ${{ github.ref_name }}
+
+            ### Install
+
+            **Linux / macOS:**
+            ```bash
+            curl -fsSL https://raw.githubusercontent.com/realm-net/sshine/main/scripts/install-release.sh | bash
+            ```
+
+            **Windows:**
+            ```powershell
+            irm https://raw.githubusercontent.com/realm-net/sshine/main/scripts/install-release.ps1 | iex
+            ```
+
+            **Build from source:**
+            ```bash
+            curl -fsSL https://raw.githubusercontent.com/realm-net/sshine/main/scripts/install-build.sh | bash
+            ```
+
+            ### Assets
+
+            Download the binary for your platform from the assets below.
+            Each archive is accompanied by a `.sha256` checksum file.
+
+            ---
+            Community: [t.me/sshine_talks](https://t.me/sshine_talks)
+          draft: false
+          prerelease: ${{ contains(github.ref_name, 'a') || contains(github.ref_name, 'b') || contains(github.ref_name, 'rc') || contains(github.ref_name, '-') }}
+          files: dist/release/*

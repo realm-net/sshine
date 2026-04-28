@@ -48,8 +48,8 @@ jobs:
           pyinstaller \
             --onefile \
             --name sshine \
-            --paths dist/obfuscated \
             --paths src \
+            --paths dist/obfuscated \
             --collect-all sshine \
             --collect-all typer \
             --collect-all rich \
@@ -118,8 +118,8 @@ jobs:
           pyinstaller \
             --onefile \
             --name sshine \
-            --paths dist/obfuscated \
             --paths src \
+            --paths dist/obfuscated \
             --collect-all sshine \
             --collect-all typer \
             --collect-all rich \
@@ -209,8 +209,8 @@ jobs:
           pyinstaller `
             --onefile `
             --name sshine `
-            --paths $env:SRC_PATH `
             --paths src `
+            --paths $env:SRC_PATH `
             --collect-all sshine `
             --collect-all typer `
             --collect-all rich `

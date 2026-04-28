@@ -165,6 +165,14 @@ jobs:
 
       - uses: astral-sh/setup-uv@v4
 
+      - name: Install OpenSSL (Windows ARM64)
+        if: matrix.arch == 'aarch64'
+        run: |
+          vcpkg install openssl:arm64-windows
+          echo "OPENSSL_DIR=C:/vcpkg/installed/arm64-windows" | Out-File -FilePath $env:GITHUB_ENV -Append
+          echo "OPENSSL_STATIC=1" | Out-File -FilePath $env:GITHUB_ENV -Append
+        shell: pwsh
+
       - run: uv sync
 
       - name: Install build tools

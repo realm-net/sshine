@@ -51,6 +51,8 @@ jobs:
             --paths dist/obfuscated \
             --paths src \
             --collect-all sshine \
+            --collect-all typer \
+            --collect-all rich \
             --hidden-import sshine \
             --hidden-import typer \
             --hidden-import rich \
@@ -119,6 +121,8 @@ jobs:
             --paths dist/obfuscated \
             --paths src \
             --collect-all sshine \
+            --collect-all typer \
+            --collect-all rich \
             --hidden-import sshine \
             --hidden-import typer \
             --hidden-import rich \
@@ -208,6 +212,8 @@ jobs:
             --paths $env:SRC_PATH `
             --paths src `
             --collect-all sshine `
+            --collect-all typer `
+            --collect-all rich `
             --hidden-import sshine `
             --hidden-import typer `
             --hidden-import rich `

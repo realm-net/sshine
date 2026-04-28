@@ -1,6 +1,6 @@
 [project]
 name = "sshine"
-version = "0.1.0a1"
+version = "0.1.0a2"
 requires-python = ">=3.14"
 dependencies = [
     "keyring>=25.7.0",

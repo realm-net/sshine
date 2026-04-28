@@ -54,7 +54,7 @@ require_cmd curl
 require_cmd tar
 
 echo ""
-echo -e "${BOLD}  sshine installer${RESET}  (release build)"
+echo -e "${BOLD}  sshine installer${RESET}  (pre-release build)"
 echo "  https://github.com/${REPO}"
 echo ""
 
@@ -62,10 +62,17 @@ PLATFORM="$(detect_platform)"
 info "Platform: $PLATFORM"
 
 if [[ -n "$TAG" ]]; then
-    BASE_URL="https://github.com/${REPO}/releases/download/${TAG}"
+    LATEST_TAG="$TAG"
+    success "Tag: $LATEST_TAG"
 else
-    BASE_URL="https://github.com/${REPO}/releases/latest/download"
+    info "Fetching latest pre-release..."
+    LATEST_TAG="$(curl -fsSL "https://api.github.com/repos/${REPO}/releases" \
+        | grep '"tag_name"' | head -1 | sed 's/.*"tag_name": *"\([^"]*\)".*/\1/')"
+    [[ -n "$LATEST_TAG" ]] || error "Could not determine latest release tag"
+    success "Found: $LATEST_TAG"
 fi
+
+BASE_URL="https://github.com/${REPO}/releases/download/${LATEST_TAG}"
 ARCHIVE_NAME="sshine-${PLATFORM}.tar.gz"
 ARCHIVE_URL="${BASE_URL}/${ARCHIVE_NAME}"
 CHECKSUM_URL="${BASE_URL}/${ARCHIVE_NAME}.sha256"

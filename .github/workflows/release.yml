@@ -224,38 +224,52 @@ jobs:
             -exec cp {} dist/release/ \;
           ls -lh dist/release/
 
+      - name: Generate release body
+        id: body
+        run: |
+          TAG="${{ github.ref_name }}"
+          if [[ "$TAG" =~ a|b|rc|- ]]; then
+            SCRIPT_SH="install-prerelease.sh"
+            SCRIPT_PS1="install-prerelease.ps1"
+          else
+            SCRIPT_SH="install-release.sh"
+            SCRIPT_PS1="install-release.ps1"
+          fi
+          cat > /tmp/release_body.md <<EOF
+          ## sshine ${TAG}
+
+          ### Install
+
+          **Linux / macOS:**
+          \`\`\`bash
+          curl -fsSL https://raw.githubusercontent.com/realm-net/sshine/main/scripts/${SCRIPT_SH} | bash -s -- --tag ${TAG}
+          \`\`\`
+
+          **Windows:**
+          \`\`\`powershell
+          & ([scriptblock]::Create((irm https://raw.githubusercontent.com/realm-net/sshine/main/scripts/${SCRIPT_PS1}))) -Tag ${TAG}
+          \`\`\`
+
+          **Build from source:**
+          \`\`\`bash
+          curl -fsSL https://raw.githubusercontent.com/realm-net/sshine/main/scripts/install-build.sh | bash
+          \`\`\`
+
+          ### Assets
+
+          Download the binary for your platform from the assets below.
+          Each archive is accompanied by a \`.sha256\` checksum file.
+
+          ---
+          Community: [t.me/sshine_talks](https://t.me/sshine_talks)
+          EOF
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.ref_name }}
           name: "sshine ${{ github.ref_name }}"
-          body: |
-            ## sshine ${{ github.ref_name }}
-
-            ### Install
-
-            **Linux / macOS:**
-            ```bash
-            curl -fsSL https://raw.githubusercontent.com/realm-net/sshine/main/scripts/install-release.sh | bash
-            ```
-
-            **Windows:**
-            ```powershell
-            irm https://raw.githubusercontent.com/realm-net/sshine/main/scripts/install-release.ps1 | iex
-            ```
-
-            **Build from source:**
-            ```bash
-            curl -fsSL https://raw.githubusercontent.com/realm-net/sshine/main/scripts/install-build.sh | bash
-            ```
-
-            ### Assets
-
-            Download the binary for your platform from the assets below.
-            Each archive is accompanied by a `.sha256` checksum file.
-
-            ---
-            Community: [t.me/sshine_talks](https://t.me/sshine_talks)
+          body_path: /tmp/release_body.md
           draft: false
           prerelease: ${{ contains(github.ref_name, 'a') || contains(github.ref_name, 'b') || contains(github.ref_name, 'rc') || contains(github.ref_name, '-') }}
           files: dist/release/*

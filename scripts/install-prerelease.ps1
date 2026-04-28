@@ -20,18 +20,35 @@ $arch = if ([System.Environment]::Is64BitOperatingSystem) {
     Write-Fail "32-bit Windows is not supported."
 }
 
-$repo        = "realm-net/sshine"
-$platform    = "windows-$arch"
-$archiveName = "sshine-${platform}.zip"
-$baseUrl     = if ($Tag) { "https://github.com/${repo}/releases/download/${Tag}" } else { "https://github.com/${repo}/releases/latest/download" }
-$archiveUrl  = "$baseUrl/$archiveName"
-$checksumUrl = "$baseUrl/$archiveName.sha256"
+$repo     = "realm-net/sshine"
+$platform = "windows-$arch"
 
 Write-Host ""
-Write-Host "  sshine installer  (release build)" -ForegroundColor Cyan
+Write-Host "  sshine installer  (pre-release build)" -ForegroundColor Cyan
 Write-Host "  https://github.com/$repo"
 Write-Host ""
 Write-Step "Platform: $platform"
+
+$ProgressPreference = "SilentlyContinue"
+if ($Tag) {
+    $latestTag = $Tag
+    Write-Ok "Tag: $latestTag"
+} else {
+    Write-Step "Fetching latest pre-release..."
+    try {
+        $releases  = Invoke-RestMethod -Uri "https://api.github.com/repos/$repo/releases" -UseBasicParsing
+        $latestTag = $releases[0].tag_name
+    } catch {
+        Write-Fail "Could not fetch releases: $_"
+    }
+    if (-not $latestTag) { Write-Fail "Could not determine latest release tag." }
+    Write-Ok "Found: $latestTag"
+}
+
+$archiveName = "sshine-${platform}.zip"
+$baseUrl     = "https://github.com/${repo}/releases/download/${latestTag}"
+$archiveUrl  = "$baseUrl/$archiveName"
+$checksumUrl = "$baseUrl/$archiveName.sha256"
 
 $tmpDir      = Join-Path $env:TEMP "sshine-install-$(Get-Random)"
 New-Item -ItemType Directory -Path $tmpDir -Force | Out-Null
@@ -39,7 +56,6 @@ $archivePath = Join-Path $tmpDir $archiveName
 
 Write-Step "Downloading..."
 try {
-    $ProgressPreference = "SilentlyContinue"
     Invoke-WebRequest -Uri $archiveUrl -OutFile $archivePath -UseBasicParsing
     Write-Ok "Downloaded $archiveName"
 } catch {
